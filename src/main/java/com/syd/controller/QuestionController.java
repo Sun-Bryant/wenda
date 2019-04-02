@@ -2,6 +2,7 @@ package com.syd.controller;
 
 import com.syd.model.*;
 import com.syd.service.CommentService;
+import com.syd.service.LikeService;
 import com.syd.service.QuestionService;
 import com.syd.service.UserService;
 import com.syd.util.WendaUtil;
@@ -33,6 +34,9 @@ public class QuestionController {
     @Autowired
     UserService userService;
 
+    @Autowired
+    LikeService likeService;
+
     @RequestMapping(value = "/question/{qid}", method = {RequestMethod.GET})
     public String questionDetail(Model model, @PathVariable("qid") int qid) {
         Question question = questionService.getById(qid);
@@ -42,6 +46,15 @@ public class QuestionController {
         for (Comment comment : commentList) {
             ViewObject vo = new ViewObject();
             vo.set("comment", comment);
+            //获取喜欢状态
+            if (hostHolder.getUser() == null) {
+                vo.set("liked", 0);
+            } else {
+                vo.set("liked", likeService.getLikeStatus(hostHolder.getUser().getId(), EntityType.ENTITY_COMMENT, comment.getId()));
+            }
+            //获取喜欢的数量
+            vo.set("likeCount", likeService.getLikeCount(EntityType.ENTITY_COMMENT, comment.getId()));
+
             vo.set("user", userService.getUser(comment.getUserId()));
             vos.add(vo);
         }

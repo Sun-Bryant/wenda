@@ -1,12 +1,12 @@
 package com.syd.controller;
 
+import com.syd.async.EventProducer;
 import com.syd.model.Comment;
 import com.syd.model.EntityType;
 import com.syd.model.HostHolder;
 import com.syd.service.CommentService;
 import com.syd.service.QuestionService;
 import com.syd.service.SensitiveService;
-import com.syd.service.UserService;
 import com.syd.util.WendaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,13 +28,13 @@ public class CommentController {
     HostHolder hostHolder;
 
     @Autowired
-    UserService userService;
-
-    @Autowired
     CommentService commentService;
 
     @Autowired
     QuestionService questionService;
+
+    @Autowired
+    EventProducer eventProducer;
 
     @Autowired
     SensitiveService sensitiveService;
@@ -69,4 +69,33 @@ public class CommentController {
         }
         return "redirect:/question/" + String.valueOf(questionId);
     }
+
+//    @RequestMapping(path = {"/addComment"}, method = {RequestMethod.POST})
+//    public String addComment(@RequestParam("questionId") int questionId,
+//                             @RequestParam("content") String content) {
+//        try {
+//            Comment comment = new Comment();
+//            comment.setContent(content);
+//            if (hostHolder.getUser() != null) {
+//                comment.setUserId(hostHolder.getUser().getId());
+//            } else {
+//                comment.setUserId(WendaUtil.ANONYMOUS_USERID);
+//                // return "redirect:/reglogin";
+//            }
+//            comment.setCreatedDate(new Date());
+//            comment.setEntityType(EntityType.ENTITY_QUESTION);
+//            comment.setEntityId(questionId);
+//            commentService.addComment(comment);
+//
+//            int count = commentService.getCommentCount(comment.getEntityId(), comment.getEntityType());
+//            questionService.updateCommentCount(comment.getEntityId(), count);
+//
+//            eventProducer.fireEvent(new EventModel(EventType.COMMENT).setActorId(comment.getUserId())
+//                    .setEntityId(questionId));
+//
+//        } catch (Exception e) {
+//            logger.error("增加评论失败" + e.getMessage());
+//        }
+//        return "redirect:/question/" + questionId;
+//    }
 }

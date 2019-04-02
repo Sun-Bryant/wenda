@@ -7,13 +7,12 @@ import org.slf4j.LoggerFactory;
 import java.security.MessageDigest;
 import java.util.Map;
 
-/**
- * Created by nowcoder on 2016/7/3.
- */
+
 public class WendaUtil {
     private static final Logger logger = LoggerFactory.getLogger(WendaUtil.class);
 
     public static int ANONYMOUS_USERID = 3;
+    public static int SYSTEM_USERID = 4;
 
     public static String getJSONString(int code) {
         JSONObject json = new JSONObject();
