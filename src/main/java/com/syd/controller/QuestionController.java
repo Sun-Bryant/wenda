@@ -1,5 +1,8 @@
 package com.syd.controller;
 
+import com.syd.async.EventModel;
+import com.syd.async.EventProducer;
+import com.syd.async.EventType;
 import com.syd.model.*;
 import com.syd.service.CommentService;
 import com.syd.service.LikeService;
@@ -37,6 +40,9 @@ public class QuestionController {
     @Autowired
     LikeService likeService;
 
+    @Autowired
+    EventProducer eventProducer;
+
     @RequestMapping(value = "/question/{qid}", method = {RequestMethod.GET})
     public String questionDetail(Model model, @PathVariable("qid") int qid) {
         Question question = questionService.getById(qid);
@@ -71,13 +77,16 @@ public class QuestionController {
             question.setContent(content);
             question.setCreatedDate(new Date());
             question.setTitle(title);
-            if (hostHolder.getUser() == null) {//如果未登录，则设置为匿名用户
+            if (hostHolder.getUser() == null) {
                 question.setUserId(WendaUtil.ANONYMOUS_USERID);
                 // return WendaUtil.getJSONString(999);
             } else {
                 question.setUserId(hostHolder.getUser().getId());
             }
             if (questionService.addQuestion(question) > 0) {
+                eventProducer.fireEvent(new EventModel(EventType.ADD_QUESTION)
+                        .setActorId(question.getUserId()).setEntityId(question.getId())
+                        .setExt("title", question.getTitle()).setExt("content", question.getContent()));
                 return WendaUtil.getJSONString(0);
             }
         } catch (Exception e) {
