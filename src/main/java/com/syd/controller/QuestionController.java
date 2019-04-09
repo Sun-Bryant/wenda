@@ -4,10 +4,7 @@ import com.syd.async.EventModel;
 import com.syd.async.EventProducer;
 import com.syd.async.EventType;
 import com.syd.model.*;
-import com.syd.service.CommentService;
-import com.syd.service.LikeService;
-import com.syd.service.QuestionService;
-import com.syd.service.UserService;
+import com.syd.service.*;
 import com.syd.util.WendaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-
 @Controller
 public class QuestionController {
     private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
@@ -29,13 +25,16 @@ public class QuestionController {
     QuestionService questionService;
 
     @Autowired
-    CommentService commentService;
-
-    @Autowired
     HostHolder hostHolder;
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    CommentService commentService;
+
+    @Autowired
+    FollowService followService;
 
     @Autowired
     LikeService likeService;
@@ -47,24 +46,45 @@ public class QuestionController {
     public String questionDetail(Model model, @PathVariable("qid") int qid) {
         Question question = questionService.getById(qid);
         model.addAttribute("question", question);
+
         List<Comment> commentList = commentService.getCommentsByEntity(qid, EntityType.ENTITY_QUESTION);
-        List<ViewObject> vos = new ArrayList<>();
+        List<ViewObject> comments = new ArrayList<ViewObject>();
         for (Comment comment : commentList) {
             ViewObject vo = new ViewObject();
             vo.set("comment", comment);
-            //获取喜欢状态
             if (hostHolder.getUser() == null) {
                 vo.set("liked", 0);
             } else {
                 vo.set("liked", likeService.getLikeStatus(hostHolder.getUser().getId(), EntityType.ENTITY_COMMENT, comment.getId()));
             }
-            //获取喜欢的数量
-            vo.set("likeCount", likeService.getLikeCount(EntityType.ENTITY_COMMENT, comment.getId()));
 
+            vo.set("likeCount", likeService.getLikeCount(EntityType.ENTITY_COMMENT, comment.getId()));
             vo.set("user", userService.getUser(comment.getUserId()));
-            vos.add(vo);
+            comments.add(vo);
         }
-        model.addAttribute("comments", vos);
+
+        model.addAttribute("comments", comments);
+
+        List<ViewObject> followUsers = new ArrayList<ViewObject>();
+        // 获取关注的用户信息
+        List<Integer> users = followService.getFollowers(EntityType.ENTITY_QUESTION, qid, 20);
+        for (Integer userId : users) {
+            ViewObject vo = new ViewObject();
+            User u = userService.getUser(userId);
+            if (u == null) {
+                continue;
+            }
+            vo.set("name", u.getName());
+            vo.set("headUrl", u.getHeadUrl());
+            vo.set("id", u.getId());
+            followUsers.add(vo);
+        }
+        model.addAttribute("followUsers", followUsers);
+        if (hostHolder.getUser() != null) {
+            model.addAttribute("followed", followService.isFollower(hostHolder.getUser().getId(), EntityType.ENTITY_QUESTION, qid));
+        } else {
+            model.addAttribute("followed", false);
+        }
 
         return "detail";
     }
